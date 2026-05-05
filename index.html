@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aomjelly Studio - ระบบออกแบบและหน้าร้านพรีเมียม</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Prompt:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #fdfaf5;
+            --primary-warm: #e8b4b8;
+            --secondary-warm: #f8d7c4;
+            --accent-warm: #d4e2d4;
+            --text-main: #5d4037;
+            --text-sub: #8d6e63;
+            --white: #ffffff;
+            --shadow: 0 10px 30px rgba(93, 64, 55, 0.05);
+            --transition: all 0.4s ease;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background-color: var(--bg-color); color: var(--text-main); font-family: 'Prompt', sans-serif; line-height: 1.6; }
+        
+        .background-decor { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none; }
+        .petal { position: absolute; background: var(--primary-warm); opacity: 0.15; border-radius: 150% 0 150% 0; animation: falling linear infinite; }
+        @keyframes falling { 0% { transform: translateY(-10vh) rotate(0deg); opacity: 0; } 15% { opacity: 0.2; } 100% { transform: translateY(110vh) rotate(360deg); opacity: 0; } }
+
+        .container { max-width: 1100px; margin: 0 auto; padding: 40px 20px; }
+        
+        /* Navigation */
+        .nav-bar {
+            display: flex; justify-content: center; gap: 15px; background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px); padding: 15px; border-radius: 100px; position: sticky; top: 20px; z-index: 100;
+            box-shadow: var(--shadow); margin-bottom: 40px;
+        }
+        .nav-bar button {
+            border: none; background: none; color: var(--text-sub); font-size: 0.9rem; font-weight: 500;
+            cursor: pointer; padding: 8px 20px; border-radius: 50px; transition: var(--transition);
+        }
+        .nav-bar button.active { background: var(--primary-warm); color: white; }
+        .nav-bar button:hover:not(.active) { background: var(--secondary-warm); color: var(--text-main); }
+
+        /* Storefront */
+        .category-filter { display: flex; justify-content: center; gap: 10px; margin-bottom: 30px; flex-wrap: wrap; }
+        .filter-btn { border: 1px solid var(--primary-warm); background: white; color: var(--text-main); padding: 5px 15px; border-radius: 20px; cursor: pointer; font-size: 0.85rem; }
+        .filter-btn.active { background: var(--primary-warm); color: white; }
+
+        .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 25px; }
+        .product-card { background: white; border-radius: 30px; overflow: hidden; box-shadow: var(--shadow); transition: var(--transition); position: relative; }
+        .product-card:hover { transform: translateY(-10px); }
+        .product-img { width: 100%; height: 200px; background: #eee; object-fit: cover; }
+        .promo-badge { position: absolute; top: 15px; left: 15px; padding: 4px 12px; border-radius: 10px; font-size: 0.75rem; color: white; font-weight: 600; }
+        .badge-sale { background: #ff8a80; }
+        .badge-new { background: #81c784; }
+        .product-info { padding: 20px; text-align: left; }
+        .product-name { font-size: 1.1rem; font-weight: 600; margin-bottom: 5px; }
+        .product-price { color: var(--primary-warm); font-weight: 700; font-size: 1.2rem; }
+
+        /* Modal Base */
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
+        .modal-content { background: white; padding: 30px; border-radius: 40px; max-width: 500px; width: 100%; position: relative; animation: slideUp 0.4s ease; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Form Elements */
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; font-weight: 600; font-size: 0.9rem; }
+        select, input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 15px; font-family: inherit; }
+        .btn-main { width: 100%; background: var(--primary-warm); color: white; padding: 15px; border: none; border-radius: 20px; font-weight: 600; cursor: pointer; margin-top: 10px; }
+
+        /* Cart & Checkout */
+        .cart-icon { position: fixed; bottom: 30px; right: 30px; background: var(--primary-warm); color: white; width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 10px 20px rgba(0,0,0,0.1); z-index: 99; }
+        .cart-badge { position: absolute; top: 0; right: 0; background: #ff5252; color: white; font-size: 0.7rem; width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+
+        /* Admin Section */
+        .admin-section { display: none; background: white; padding: 40px; border-radius: 40px; box-shadow: var(--shadow); }
+        .admin-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        .admin-table th, .admin-table td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; }
+
+        .hidden { display: none; }
+        .active-section { display: block !important; }
+
+        @media (max-width: 600px) {
+            .nav-bar { border-radius: 20px; flex-wrap: wrap; }
+            .hero-title { font-size: 2.5rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="background-decor" id="petals"></div>
+
+    <!-- (1) TOP LOGO AREA -->
+    <div style="text-align: center; margin-top: 60px;">
+        <div style="font-size: 50px;">🕊️</div>
+        <h1 style="font-family: 'Playfair Display'; font-size: 3rem; margin-top: 10px;">Aomjelly Studio</h1>
+        <p style="color: var(--text-sub);">Premium & Aesthetic Web Solution</p>
+    </div>
+
+    <div class="container">
+        <!-- (2) NAVIGATION -->
+        <nav class="nav-bar">
+            <button onclick="changePage('home')" id="btn-home" class="active">Home</button>
+            <button onclick="changePage('shop')" id="btn-shop">Shop</button>
+            <button onclick="changePage('how-to')" id="btn-how-to">How to Order</button>
+            <button onclick="changePage('rules')" id="btn-rules">Rules</button>
+            <button onclick="changePage('admin')" id="btn-admin">Backend</button>
+        </nav>
+
+        <!-- (3) PAGE SECTIONS -->
+        
+        <!-- HOME PAGE -->
+        <section id="home" class="page-section active-section">
+            <div style="text-align: center; padding: 60px 0;">
+                <h2 style="font-size: 2.5rem; margin-bottom: 20px;">ยินดีที่ได้พบนะคะ ✿</h2>
+                <p style="max-width: 700px; margin: 0 auto; color: var(--text-sub); font-size: 1.2rem;">
+                    เนรมิตความฝันให้เป็นเว็บไซต์ที่อบอุ่นและละมุนหัวใจเหมือนคาเฟ่ญี่ปุ่น 
+                    ทุกงานออกแบบเริ่มต้นจากความใส่ใจในรายละเอียด เพื่อสร้างตัวตนของคุณให้พิเศษที่สุด
+                </p>
+                <div style="margin-top: 40px;">
+                    <button class="btn-main" style="max-width: 250px;" onclick="changePage('shop')">เลือกชมสินค้า 🛒</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- SHOP PAGE -->
+        <section id="shop" class="page-section hidden">
+            <div class="category-filter" id="category-list">
+                <button class="filter-btn active" onclick="filterProducts('all')">ทั้งหมด</button>
+                <button class="filter-btn" onclick="filterProducts('template')">Website Template</button>
+                <button class="filter-btn" onclick="filterProducts('asset')">Graphic Asset</button>
+            </div>
+            
+            <div class="product-grid" id="product-display">
+                <!-- Products will be loaded here by JS -->
+            </div>
+        </section>
+
+        <!-- HOW TO ORDER -->
+        <section id="how-to" class="page-section hidden">
+            <div style="background: white; padding: 50px; border-radius: 40px; box-shadow: var(--shadow);">
+                <h2 style="text-align: center; margin-bottom: 30px;">📋 ขั้นตอนการสั่งซื้อ</h2>
+                <div style="max-width: 500px; margin: 0 auto;">
+                    <p>🥯 1. เลือกสินค้าที่ถูกใจลงตะกร้า</p>
+                    <p>🥐 2. ตรวจสอบเงื่อนไขการใช้งาน (License)</p>
+                    <p>🍋 3. ชำระเงินผ่าน QR Code และส่งหลักฐาน</p>
+                    <p>🧂 4. รอรับลิงก์ดาวน์โหลดทาง Email หรือ LINE จ้า</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- RULES PAGE -->
+        <section id="rules" class="page-section hidden">
+            <div style="background: white; padding: 50px; border-radius: 40px; box-shadow: var(--shadow);">
+                <h2 style="text-align: center; margin-bottom: 30px;">✿ กฎและข้อตกลง</h2>
+                <p>• โอนเงินแล้วไม่คืนเงินทุกกรณีจ้า</p>
+                <p>• License Personal สำหรับใช้ส่วนตัวเท่านั้น ห้ามขายต่อ</p>
+                <p>• License Commercial สำหรับใช้ในเชิงพาณิชย์ได้จ้า</p>
+            </div>
+        </section>
+
+        <!-- ADMIN PANEL -->
+        <section id="admin" class="page-section hidden">
+            <div class="admin-section active-section">
+                <h2>☁️ ระบบจัดการหลังบ้าน</h2>
+                <div style="margin-top: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div style="background: var(--bg-color); padding: 20px; border-radius: 20px;">
+                        <h3>เพิ่มสินค้าใหม่</h3>
+                        <div class="form-group"><label>ชื่อสินค้า</label><input type="text" id="admin-p-name"></div>
+                        <div class="form-group"><label>ราคา (ส่วนตัว)</label><input type="number" id="admin-p-price"></div>
+                        <div class="form-group"><label>ราคา (พาณิชย์)</label><input type="number" id="admin-p-price-com"></div>
+                        <div class="form-group">
+                            <label>ป้ายกำกับ</label>
+                            <select id="admin-p-badge">
+                                <option value="">ไม่มี</option>
+                                <option value="badge-new">New</option>
+                                <option value="badge-sale">Sale</option>
+                            </select>
+                        </div>
+                        <button class="btn-main" onclick="adminAddProduct()">เพิ่มเข้าหน้าร้าน ✨</button>
+                    </div>
+                    <div style="background: var(--bg-color); padding: 20px; border-radius: 20px;">
+                        <h3>ตกแต่งเว็บไซต์</h3>
+                        <div class="form-group"><label>สีหลัก (Primary)</label><input type="color" id="admin-color-picker" value="#e8b4b8" onchange="updateTheme(this.value)"></div>
+                        <p style="font-size: 0.8rem;">* ระบบจะเปลี่ยนสีปุ่มและจุดเน้นต่างๆ ทั่วเว็บ</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- MODALS -->
+    
+    <!-- Product Detail Modal -->
+    <div id="product-modal" class="modal">
+        <div class="modal-content">
+            <button onclick="closeModal('product-modal')" style="position:absolute; right:20px; top:20px; border:none; background:none; font-size:1.5rem; cursor:pointer;">×</button>
+            <h2 id="modal-title">ชื่อสินค้า</h2>
+            <p id="modal-desc" style="color: var(--text-sub); margin-bottom: 20px;">รายละเอียดเบื้องต้นของสินค้าชิ้นนี้...</p>
+            
+            <div class="form-group">
+                <label>ประเภท License</label>
+                <select id="select-license" onchange="updateModalPrice()">
+                    <option value="personal">Personal (ส่วนตัว)</option>
+                    <option value="commercial">Commercial (เชิงพาณิชย์)</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label>จำนวน</label>
+                <input type="number" id="select-qty" value="1" min="1">
+            </div>
+            
+            <div style="font-size: 1.3rem; font-weight: 700; color: var(--primary-warm); margin-bottom: 20px;">
+                ราคารวม: <span id="modal-total">0</span> บาท
+            </div>
+            
+            <button class="btn-main" onclick="addToCart()">เพิ่มลงตะกร้า 🛒</button>
+        </div>
+    </div>
+
+    <!-- Cart Modal -->
+    <div id="cart-modal" class="modal">
+        <div class="modal-content">
+            <button onclick="closeModal('cart-modal')" style="position:absolute; right:20px; top:20px; border:none; background:none; font-size:1.5rem; cursor:pointer;">×</button>
+            <h2>🛒 ตะกร้าสินค้า</h2>
+            <div id="cart-items" style="margin: 20px 0; max-height: 200px; overflow-y: auto;">
+                <!-- Items here -->
+            </div>
+            <div class="form-group">
+                <label>โค้ดส่วนลด</label>
+                <input type="text" id="discount-code" placeholder="ใส่โค้ดที่นี่ (เช่น: JELLY10)">
+            </div>
+            <div style="text-align: right; font-weight: 700; font-size: 1.2rem;">
+                ยอดสุทธิ: <span id="cart-total">0</span> บาท
+            </div>
+            <button class="btn-main" onclick="showTOS()">ชำระเงินจ้า 💳</button>
+        </div>
+    </div>
+
+    <!-- TOS Modal -->
+    <div id="tos-modal" class="modal">
+        <div class="modal-content">
+            <h2>✿ ข้อตกลงการสั่งซื้อ</h2>
+            <div style="margin: 20px 0; font-size: 0.9rem; border: 1px solid #eee; padding: 15px; border-radius: 15px;">
+                1. สินค้าเป็น Digital Product ซื้อแล้วไม่รับเปลี่ยนคืน<br>
+                2. ห้ามดัดแปลงเพื่อนำไปขายต่อในทุกกรณี<br>
+                3. ระยะเวลาการส่งงาน 4-8 ชม. ตามคิวจ้า
+            </div>
+            <button class="btn-main" onclick="showPayment()">ฉันยอมรับและยืนยันการสั่งซื้อ</button>
+            <button onclick="closeModal('tos-modal')" style="width:100%; border:none; background:none; margin-top:10px; cursor:pointer;">ยกเลิก</button>
+        </div>
+    </div>
+
+    <!-- Payment Modal -->
+    <div id="payment-modal" class="modal">
+        <div class="modal-content" style="text-align:center;">
+            <h2>💳 ชำระเงิน</h2>
+            <p style="margin-bottom: 20px;">สแกนผ่านแอปธนาคารได้เลยค่ะ</p>
+            <div style="background: #f0f0f0; width: 200px; height: 200px; margin: 0 auto; display: flex; align-items: center; justify-content: center; border-radius: 20px;">
+                <!-- Simulated QR -->
+                <div style="padding: 10px; background: white;">
+                    
+                </div>
+            </div>
+            <p style="margin: 20px 0; font-weight: 700; color: var(--primary-warm);">จำนวนเงิน: <span id="pay-amount">0</span> บาท</p>
+            <button class="btn-main" onclick="finishOrder()">แจ้งโอนเข้า LINE OA ✨</button>
+        </div>
+    </div>
+
+    <!-- Floating Cart Icon -->
+    <div class="cart-icon" onclick="openCart()">
+        <span class="cart-badge" id="cart-count">0</span>
+        <span>🛒</span>
+    </div>
+
+    <script>
+        // --- DATA ---
+        let products = [
+            { id: 1, name: "Coquette Web Template", pricePersonal: 1290, priceCom: 2500, category: "template", badge: "badge-sale", img: "https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?q=80&w=400&fit=crop" },
+            { id: 2, name: "Japanese Minimal Set", pricePersonal: 890, priceCom: 1800, category: "template", badge: "badge-new", img: "https://images.unsplash.com/photo-1556910103-1c02745aae4d?q=80&w=400&fit=crop" },
+            { id: 3, name: "Y2K Sticker Pack", pricePersonal: 250, priceCom: 500, category: "asset", badge: "", img: "https://images.unsplash.com/photo-1542831371-29b0f74f9713?q=80&w=400&fit=crop" }
+        ];
+
+        let cart = [];
+        let currentProduct = null;
+
+        // --- CORE FUNCTIONS ---
+        function init() {
+            renderProducts(products);
+            createPetals();
+        }
+
+        function createPetals() {
+            const container = document.getElementById('petals');
+            for(let i=0; i<10; i++) {
+                const petal = document.createElement('div');
+                petal.className = 'petal';
+                petal.style.width = Math.random() * 15 + 10 + 'px';
+                petal.style.height = petal.style.width;
+                petal.style.left = Math.random() * 100 + '%';
+                petal.style.animationDuration = Math.random() * 10 + 15 + 's';
+                petal.style.animationDelay = Math.random() * 5 + 's';
+                container.appendChild(petal);
+            }
+        }
+
+        function renderProducts(list) {
+            const display = document.getElementById('product-display');
+            display.innerHTML = '';
+            list.forEach(p => {
+                display.innerHTML += `
+                    <div class="product-card" onclick="openProduct(${p.id})">
+                        ${p.badge ? `<span class="promo-badge ${p.badge}">${p.badge.replace('badge-', '').toUpperCase()}</span>` : ''}
+                        <img src="${p.img}" class="product-img">
+                        <div class="product-info">
+                            <div class="product-name">${p.name}</div>
+                            <div class="product-price">฿${p.pricePersonal.toLocaleString()}</div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function filterProducts(cat) {
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            event.target.classList.add('active');
+            if(cat === 'all') renderProducts(products);
+            else renderProducts(products.filter(p => p.category === cat));
+        }
+
+        function changePage(pageId) {
+            document.querySelectorAll('.page-section').forEach(p => p.classList.add('hidden'));
+            document.getElementById(pageId).classList.remove('hidden');
+            document.getElementById(pageId).classList.add('active-section');
+            
+            document.querySelectorAll('.nav-bar button').forEach(b => b.classList.remove('active'));
+            document.getElementById('btn-' + pageId).classList.add('active');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // --- MODAL & CART LOGIC ---
+        function openProduct(id) {
+            currentProduct = products.find(p => p.id === id);
+            document.getElementById('modal-title').innerText = currentProduct.name;
+            document.getElementById('select-qty').value = 1;
+            document.getElementById('select-license').value = "personal";
+            updateModalPrice();
+            document.getElementById('product-modal').style.display = 'flex';
+        }
+
+        function updateModalPrice() {
+            const license = document.getElementById('select-license').value;
+            const qty = parseInt(document.getElementById('select-qty').value) || 1;
+            const basePrice = license === 'personal' ? currentProduct.pricePersonal : currentProduct.priceCom;
+            document.getElementById('modal-total').innerText = (basePrice * qty).toLocaleString();
+        }
+
+        function addToCart() {
+            const license = document.getElementById('select-license').value;
+            const qty = parseInt(document.getElementById('select-qty').value);
+            const price = license === 'personal' ? currentProduct.pricePersonal : currentProduct.priceCom;
+            
+            cart.push({ ...currentProduct, selectedLicense: license, qty: qty, totalPrice: price * qty });
+            updateCartBadge();
+            closeModal('product-modal');
+            
+            // Custom Message
+            const msg = document.createElement('div');
+            msg.style = "position:fixed; top:100px; right:20px; background:#81c784; color:white; padding:15px; border-radius:15px; z-index:2000;";
+            msg.innerText = "เพิ่มลงตะกร้าแล้วจ้า ✿";
+            document.body.appendChild(msg);
+            setTimeout(() => msg.remove(), 2000);
+        }
+
+        function updateCartBadge() {
+            document.getElementById('cart-count').innerText = cart.length;
+        }
+
+        function openCart() {
+            const list = document.getElementById('cart-items');
+            list.innerHTML = '';
+            let total = 0;
+            cart.forEach((item, index) => {
+                total += item.totalPrice;
+                list.innerHTML += `
+                    <div style="display:flex; justify-content:space-between; margin-bottom:10px; border-bottom:1px solid #eee; padding-bottom:10px;">
+                        <div>
+                            <b>${item.name}</b><br>
+                            <small>${item.selectedLicense} x ${item.qty}</small>
+                        </div>
+                        <div>
+                            ฿${item.totalPrice.toLocaleString()}
+                            <button onclick="removeFromCart(${index})" style="color:red; border:none; background:none; cursor:pointer; margin-left:10px;">×</button>
+                        </div>
+                    </div>
+                `;
+            });
+            document.getElementById('cart-total').innerText = total.toLocaleString();
+            document.getElementById('cart-modal').style.display = 'flex';
+        }
+
+        function removeFromCart(index) {
+            cart.splice(index, 1);
+            updateCartBadge();
+            openCart();
+        }
+
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+        function showTOS() { closeModal('cart-modal'); document.getElementById('tos-modal').style.display = 'flex'; }
+        function showPayment() { 
+            closeModal('tos-modal'); 
+            const total = cart.reduce((acc, curr) => acc + curr.totalPrice, 0);
+            document.getElementById('pay-amount').innerText = total.toLocaleString();
+            document.getElementById('payment-modal').style.display = 'flex'; 
+        }
+
+        function finishOrder() {
+            const total = document.getElementById('pay-amount').innerText;
+            const items = cart.map(i => `- ${i.name} (${i.selectedLicense}) x${i.qty}`).join('%0A');
+            const lineUrl = `https://line.me/R/oaMessage/@yourstore/?สั่งซื้อสินค้าจ้า%0Aรายการ:%0A${items}%0Aยอดรวม: ${total} บาท%0A(รบกวนแนบสลิปชำระเงินที่นี่นะคะ)`;
+            window.open(lineUrl, '_blank');
+            cart = [];
+            updateCartBadge();
+            closeModal('payment-modal');
+        }
+
+        // --- ADMIN FUNCTIONS ---
+        function adminAddProduct() {
+            const name = document.getElementById('admin-p-name').value;
+            const priceP = parseInt(document.getElementById('admin-p-price').value);
+            const priceC = parseInt(document.getElementById('admin-p-price-com').value);
+            const badge = document.getElementById('admin-p-badge').value;
+            
+            if(!name || !priceP) return;
+
+            products.push({
+                id: Date.now(),
+                name: name,
+                pricePersonal: priceP,
+                priceCom: priceC,
+                category: "template",
+                badge: badge,
+                img: "https://images.unsplash.com/photo-1517841905240-472988babdf9?q=80&w=400&fit=crop"
+            });
+
+            renderProducts(products);
+            alert("เพิ่มสินค้าสำเร็จแล้วจ้า ✿");
+        }
+
+        function updateTheme(color) {
+            document.documentElement.style.setProperty('--primary-warm', color);
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>
+
+
